@@ -19,10 +19,12 @@
               v-model="email"
               type="email"
               class="form-input"
+              :class="{ 'form-input-error': fieldErrors.email }"
               placeholder="example@domain.com"
               :disabled="isLoading"
               required
             />
+            <FieldError :error="fieldErrors.email" />
           </div>
 
           <div class="form-group">
@@ -32,10 +34,12 @@
               v-model="password"
               type="password"
               class="form-input"
+              :class="{ 'form-input-error': fieldErrors.password }"
               placeholder="Введите пароль"
               :disabled="isLoading"
               required
             />
+            <FieldError :error="fieldErrors.password" />
           </div>
 
           <div class="form-footer">
@@ -53,9 +57,9 @@
 
         <div class="auth-switch">
           <span class="auth-switch-text">Нет аккаунта?</span>
-          <a href="#" @click.prevent="$emit('switch-to-register')" class="auth-switch-link">
+          <router-link to="/register" class="auth-switch-link">
             Зарегистрироваться
-          </a>
+          </router-link>
         </div>
       </div>
     </div>
@@ -64,17 +68,21 @@
 
 <script setup>
 import { ref } from 'vue'
+import FieldError from './FieldError.vue'
+import { handleApiError } from '../utils/errorHandler.js'
 
 const email = ref('')
 const password = ref('')
 // const rememberMe = ref(false)
 const isLoading = ref(false)
 const errorMessage = ref('')
+const fieldErrors = ref({})
 
-const emit = defineEmits(['login-success', 'switch-to-register'])
+const emit = defineEmits(['login-success'])
 
 const handleLogin = async () => {
   errorMessage.value = ''
+  fieldErrors.value = {}
   isLoading.value = true
 
   try {
@@ -94,12 +102,15 @@ const handleLogin = async () => {
     console.log('response: ',data)
 
     if (!response.ok) {
-      throw new Error(data.message || 'Ошибка при входе')
+      const errorInfo = await handleApiError(response, data)
+      errorMessage.value = errorInfo.generalError
+      fieldErrors.value = errorInfo.fieldErrors
+      return
     }
 
     emit('login-success', { email: email.value })
   } catch (error) {
-    errorMessage.value = error.message || 'Произошла ошибка при входе'
+    errorMessage.value = 'Произошла ошибка при входе'
     console.error('Login error:', error)
   } finally {
     isLoading.value = false
@@ -211,6 +222,16 @@ const handleLogin = async () => {
   opacity: 0.6;
   cursor: not-allowed;
   background: var(--color-border-light);
+}
+
+.form-input-error {
+  border-color: #feb2b2;
+  background: #fff5f5;
+}
+
+.form-input-error:focus {
+  border-color: #fc8181;
+  box-shadow: 0 0 0 3px rgba(252, 129, 129, 0.1);
 }
 
 .form-footer {

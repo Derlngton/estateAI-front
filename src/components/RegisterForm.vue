@@ -19,10 +19,12 @@
               v-model="name"
               type="text"
               class="form-input"
+              :class="{ 'form-input-error': fieldErrors.name }"
               placeholder="Иван Иванов"
               :disabled="isLoading"
               required
             />
+            <FieldError :error="fieldErrors.name" />
           </div>
 
           <div class="form-group">
@@ -32,10 +34,12 @@
               v-model="email"
               type="email"
               class="form-input"
+              :class="{ 'form-input-error': fieldErrors.email }"
               placeholder="example@domain.com"
               :disabled="isLoading"
               required
             />
+            <FieldError :error="fieldErrors.email" />
           </div>
 
           <div class="form-group">
@@ -45,11 +49,13 @@
               v-model="password"
               type="password"
               class="form-input"
+              :class="{ 'form-input-error': fieldErrors.password }"
               placeholder="Минимум 8 символов"
               :disabled="isLoading"
               required
               minlength="8"
             />
+            <FieldError :error="fieldErrors.password" />
           </div>
 
           <div class="form-group">
@@ -59,10 +65,12 @@
               v-model="confirmPassword"
               type="password"
               class="form-input"
+              :class="{ 'form-input-error': fieldErrors.confirmPassword }"
               placeholder="Повторите пароль"
               :disabled="isLoading"
               required
             />
+            <FieldError :error="fieldErrors.confirmPassword" />
           </div>
 
           <div class="form-footer">
@@ -81,9 +89,9 @@
 
         <div class="auth-switch">
           <span class="auth-switch-text">Уже есть аккаунт?</span>
-          <a href="#" @click.prevent="$emit('switch-to-login')" class="auth-switch-link">
+          <router-link to="/login" class="auth-switch-link">
             Войти
-          </a>
+          </router-link>
         </div>
       </div>
     </div>
@@ -92,6 +100,8 @@
 
 <script setup>
 import { ref } from 'vue'
+import FieldError from './FieldError.vue'
+import { handleApiError } from '../utils/errorHandler.js'
 
 const name = ref('')
 const email = ref('')
@@ -100,11 +110,13 @@ const confirmPassword = ref('')
 const acceptTerms = ref(false)
 const isLoading = ref(false)
 const errorMessage = ref('')
+const fieldErrors = ref({})
 
-const emit = defineEmits(['register-success', 'switch-to-login'])
+const emit = defineEmits(['register-success'])
 
 const handleRegister = async () => {
   errorMessage.value = ''
+  fieldErrors.value = {}
 
   console.log('📝 [REGISTER] Начало процесса регистрации', {
     name: name.value,
@@ -114,7 +126,7 @@ const handleRegister = async () => {
 
   if (password.value !== confirmPassword.value) {
     console.warn('⚠️ [REGISTER] Пароли не совпадают')
-    errorMessage.value = 'Пароли не совпадают'
+    fieldErrors.value.confirmPassword = 'Пароли не совпадают'
     return
   }
 
@@ -160,7 +172,11 @@ const handleRegister = async () => {
         status: response.status,
         message: data.message || 'Неизвестная ошибка'
       })
-      throw new Error(data.message || 'Ошибка при регистрации')
+
+      const errorInfo = await handleApiError(response, data)
+      errorMessage.value = errorInfo.generalError
+      fieldErrors.value = errorInfo.fieldErrors
+      return
     }
 
     console.log('✅ [REGISTER] Успешная регистрация', {
@@ -171,7 +187,7 @@ const handleRegister = async () => {
 
     emit('register-success', { name: name.value, email: email.value })
   } catch (error) {
-    errorMessage.value = error.message || 'Произошла ошибка при регистрации'
+    errorMessage.value = 'Произошла ошибка при регистрации'
     console.error('💥 [REGISTER] Критическая ошибка:', {
       name: error.name,
       message: error.message,
@@ -288,6 +304,16 @@ const handleRegister = async () => {
   opacity: 0.6;
   cursor: not-allowed;
   background: var(--color-border-light);
+}
+
+.form-input-error {
+  border-color: #feb2b2;
+  background: #fff5f5;
+}
+
+.form-input-error:focus {
+  border-color: #fc8181;
+  box-shadow: 0 0 0 3px rgba(252, 129, 129, 0.1);
 }
 
 .form-footer {

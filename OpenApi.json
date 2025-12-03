@@ -1,0 +1,835 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "EstateAI API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "Авторизация и аутентификация"
+        ],
+        "summary": "Регистрация нового пользователя",
+        "description": "Регистрация нового пользователя",
+        "operationId": "register_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRequestAdd"
+              },
+              "examples": {
+                "1": {
+                  "summary": "Риелтор_1",
+                  "value": {
+                    "email": "indus@indi.com",
+                    "password": "22faf!!",
+                    "name": "ДыГ дЫг"
+                  }
+                },
+                "2": {
+                  "summary": "Риелтор_2",
+                  "value": {
+                    "email": "old_indus@xuxu.com",
+                    "password": "1111",
+                    "name": "ГыГ МЫг"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Авторизация и аутентификация"
+        ],
+        "summary": "Авторизация пользователя",
+        "description": "Авторизация пользователя. Проверяет email и пароль. Создает JWT токены",
+        "operationId": "login_user_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLogin"
+              },
+              "examples": {
+                "1": {
+                  "summary": "Риелтор_1",
+                  "value": {
+                    "email": "indus@indi.com",
+                    "password": "22faf!!"
+                  }
+                },
+                "2": {
+                  "summary": "Риелтор_2",
+                  "value": {
+                    "email": "old_indus@xuxu.com",
+                    "password": "1111"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_LoginData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "Авторизация и аутентификация"
+        ],
+        "summary": "Обновление токенов",
+        "description": "Использует refresh token из httponlycookies для создания новой пары токенов",
+        "operationId": "refresh_tokens_auth_refresh_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_TokensData_"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Авторизация и аутентификация"
+        ],
+        "summary": "Логаут",
+        "description": "Выход из системы.Удаляет оба токена из cookies.",
+        "operationId": "logout_user_auth_logout_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "Авторизация и аутентификация"
+        ],
+        "summary": "Получение информации о текущем пользователе",
+        "description": "Получение информации о текущем пользователе.Требует валидный access token в cookies.",
+        "operationId": "get_me_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agents/create": {
+      "post": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Создание нового агента",
+        "description": "Создание нового агента",
+        "operationId": "create_agent_agents_create_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentAddRequest"
+              },
+              "examples": {
+                "1": {
+                  "summary": "Агент_1",
+                  "value": {
+                    "name": "Индусмен Деловой",
+                    "phone": "+79873334442",
+                    "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop",
+                    "messenger": "WhatsApp",
+                    "type": "Работа с базой клиентов",
+                    "description": "Работаю с коммерческой недвижимостью более 8 лет. Найду идеальное помещение для вашего бизнеса"
+                  }
+                },
+                "2": {
+                  "summary": "Агент_2",
+                  "value": {
+                    "name": "Риэлтор Риэлторов",
+                    "phone": "+79223222212",
+                    "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop",
+                    "messenger": "Telegram",
+                    "type": "Работа с базой клиентов",
+                    "description": "Помогаю разобраться с ипотекой и выбрать квартиру мечты. На связи в любое удобное время"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_Agent_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agents/get_agent/{agent_id}": {
+      "get": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Получение конкретного агента",
+        "description": "Получение одного агента по айди",
+        "operationId": "get_agent_agents_get_agent__agent_id__get",
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Agent Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_Agent_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agents/get_all_agents": {
+      "get": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Получение пользователем всех своих агентов",
+        "description": "Получение всех агентов пользователя",
+        "operationId": "get_all_my_agents_agents_get_all_agents_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agents/{agent_id}": {
+      "delete": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Удаление агента",
+        "description": "Удаление агента",
+        "operationId": "delete_agent_agents__agent_id__delete",
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Agent Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Полное обновление данных об агенте",
+        "description": "Полное обновление данных об агенте",
+        "operationId": "put_agent_agents__agent_id__put",
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Agent Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentAddRequest"
+              },
+              "examples": {
+                "1": {
+                  "summary": "Агент_1_новый",
+                  "value": {
+                    "name": "Индусмен Жестко Деловой",
+                    "phone": "+79873334442",
+                    "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop",
+                    "messenger": "Telegram",
+                    "type": "Работа с базой клиентов",
+                    "description": "Работаю с коммерческой недвижимостью более 8 лет. Найду идеальное помещение для вашего бизнеса"
+                  }
+                },
+                "2": {
+                  "summary": "Агент_2",
+                  "value": {
+                    "name": "Риэлтор Риэлторов",
+                    "phone": "+79223222212",
+                    "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop",
+                    "messenger": "Telegram",
+                    "type": "Работа с базой клиентов",
+                    "description": "Помогаю разобраться с ипотекой и выбрать квартиру мечты"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_Agent_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Agent": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "phone": {
+            "type": "string",
+            "title": "Phone"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AgentTypeEnum"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "messenger": {
+            "$ref": "#/components/schemas/MessengerTypeEnum"
+          },
+          "avatar": {
+            "type": "string",
+            "title": "Avatar"
+          },
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AgentStatusEnum"
+          },
+          "conversations": {
+            "type": "integer",
+            "title": "Conversations"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "phone",
+          "type",
+          "messenger",
+          "avatar",
+          "user_id",
+          "status",
+          "conversations",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "Agent"
+      },
+      "AgentAddRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "phone": {
+            "type": "string",
+            "title": "Phone"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AgentTypeEnum"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "messenger": {
+            "$ref": "#/components/schemas/MessengerTypeEnum"
+          },
+          "avatar": {
+            "type": "string",
+            "title": "Avatar"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "phone",
+          "type",
+          "messenger",
+          "avatar"
+        ],
+        "title": "AgentAddRequest"
+      },
+      "AgentListResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "ok",
+            "example": "ok"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/Agent"
+            },
+            "type": "array",
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "AgentListResponse",
+        "description": "Список агентов"
+      },
+      "AgentStatusEnum": {
+        "type": "string",
+        "enum": [
+          "Working",
+          "Stopped",
+          "Done",
+          "Banned"
+        ],
+        "title": "AgentStatusEnum"
+      },
+      "AgentTypeEnum": {
+        "type": "string",
+        "enum": [
+          "Работа с базой клиентов"
+        ],
+        "title": "AgentTypeEnum"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "LoginData": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "example": 1
+          },
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "example": "user@example.com"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email"
+        ],
+        "title": "LoginData"
+      },
+      "MessageResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "ok",
+            "example": "ok"
+          },
+          "data": {
+            "type": "string",
+            "title": "Data",
+            "example": "Операция выполнена успешно"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "MessageResponse",
+        "description": "Ответ с текстовым сообщением"
+      },
+      "MessengerTypeEnum": {
+        "type": "string",
+        "enum": [
+          "Telegram",
+          "WhatsApp",
+          "Viber"
+        ],
+        "title": "MessengerTypeEnum"
+      },
+      "SuccessResponse_Agent_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "ok",
+            "example": "ok"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Agent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[Agent]"
+      },
+      "SuccessResponse_LoginData_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "ok",
+            "example": "ok"
+          },
+          "data": {
+            "$ref": "#/components/schemas/LoginData"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[LoginData]"
+      },
+      "SuccessResponse_TokensData_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "ok",
+            "example": "ok"
+          },
+          "data": {
+            "$ref": "#/components/schemas/TokensData"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[TokensData]"
+      },
+      "TokensData": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "refresh_token"
+        ],
+        "title": "TokensData"
+      },
+      "UserLogin": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "UserLogin"
+      },
+      "UserRequestAdd": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "name"
+        ],
+        "title": "UserRequestAdd"
+      },
+      "UserResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "example": 1
+          },
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "example": "user@example.com"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email"
+        ],
+        "title": "UserResponse",
+        "description": "Данные пользователя"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

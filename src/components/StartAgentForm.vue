@@ -171,20 +171,23 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { fetchWithAuth } from '../utils/api.js'
 
+const router = useRouter()
+const route = useRoute()
+
 const props = defineProps({
-  agentId: {
-    type: [Number, String],
-    required: true
-  },
-  agentName: {
+  id: {
     type: String,
-    default: 'Агент'
+    required: false
   }
 })
 
-const emit = defineEmits(['back', 'agent-started'])
+// Получаем ID из props или из route params
+const agentId = computed(() => props.id || route.params.id)
+
+const emit = defineEmits(['agent-started'])
 
 const formData = ref({
   prompt: '',
@@ -247,12 +250,12 @@ const handleSubmit = async () => {
 
   try {
     console.log('🚀 [START_AGENT] Запуск агента:', {
-      agentId: props.agentId,
+      agentId: agentId.value,
       ...formData.value
     })
 
     const formDataToSend = new FormData()
-    formDataToSend.append('agent_id', props.agentId)
+    formDataToSend.append('agent_id', agentId.value)
     formDataToSend.append('prompt', formData.value.prompt)
     formDataToSend.append('city', formData.value.city)
     formDataToSend.append('init_start_time', formData.value.initStartTime)
@@ -279,6 +282,8 @@ const handleSubmit = async () => {
 
     console.log('✅ [START_AGENT] Агент успешно запущен')
     emit('agent-started', data)
+
+    router.push('/agents')
   } catch (error) {
     errorMessage.value = error.message || 'Произошла ошибка при запуске агента'
     console.error('💥 [START_AGENT] Ошибка:', error)
@@ -288,7 +293,7 @@ const handleSubmit = async () => {
 }
 
 const handleBack = () => {
-  emit('back')
+  router.push('/agents')
 }
 </script>
 

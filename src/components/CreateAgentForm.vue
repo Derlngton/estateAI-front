@@ -51,10 +51,12 @@
               v-model="formData.name"
               type="text"
               class="form-input"
+              :class="{ 'form-input-error': fieldErrors.name }"
               placeholder="Анна Соколова"
               :disabled="isLoading"
               required
             />
+            <FieldError :error="fieldErrors.name" />
           </div>
 
           <div class="form-group">
@@ -64,10 +66,12 @@
               v-model="formData.phone"
               type="tel"
               class="form-input"
+              :class="{ 'form-input-error': fieldErrors.phone }"
               placeholder="+7 (926) 555-1234"
               :disabled="isLoading"
               required
             />
+            <FieldError :error="fieldErrors.phone" />
           </div>
 
           <div class="form-group">
@@ -76,12 +80,14 @@
               id="type"
               v-model="formData.type"
               class="form-input"
+              :class="{ 'form-input-error': fieldErrors.type }"
               :disabled="isLoading"
               required
             >
               <option value="">Выберите тип</option>
               <option value="Работа с базой клиентов">Работа с базой клиентов</option>
             </select>
+            <FieldError :error="fieldErrors.type" />
           </div>
 
           <div class="form-group">
@@ -90,6 +96,7 @@
               id="messenger"
               v-model="formData.messenger"
               class="form-input"
+              :class="{ 'form-input-error': fieldErrors.messenger }"
               :disabled="isLoading"
               required
             >
@@ -98,6 +105,7 @@
               <option value="WhatsApp">WhatsApp</option>
               <option value="Viber">Viber</option>
             </select>
+            <FieldError :error="fieldErrors.messenger" />
           </div>
 
           <div class="form-group">
@@ -106,11 +114,13 @@
               id="description"
               v-model="formData.description"
               class="form-input form-textarea"
+              :class="{ 'form-input-error': fieldErrors.description }"
               placeholder="Специализируюсь на квартирах в новостройках. Помогу подобрать оптимальный вариант..."
               :disabled="isLoading"
               required
               rows="4"
             ></textarea>
+            <FieldError :error="fieldErrors.description" />
           </div>
 
 
@@ -127,7 +137,12 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { fetchWithAuth } from '../utils/api.js'
+import FieldError from './FieldError.vue'
+import { handleApiError } from '../utils/errorHandler.js'
+
+const router = useRouter()
 
 const formData = ref({
   name: '',
@@ -140,8 +155,9 @@ const formData = ref({
 
 const isLoading = ref(false)
 const errorMessage = ref('')
+const fieldErrors = ref({})
 
-const emit = defineEmits(['agent-created', 'back'])
+const emit = defineEmits(['agent-created'])
 
 const avatarOptions = [
   'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop',
@@ -175,9 +191,10 @@ const validatePhone = (phone) => {
 
 const handleSubmit = async () => {
   errorMessage.value = ''
+  fieldErrors.value = {}
 
   if (!validatePhone(formData.value.phone)) {
-    errorMessage.value = 'Введите корректный номер телефона'
+    fieldErrors.value.phone = 'Введите корректный номер телефона'
     return
   }
 
@@ -203,15 +220,23 @@ const handleSubmit = async () => {
     console.log('📥 [CREATE_AGENT] Данные ответа:', data)
 
     if (!response.ok) {
-      const errorDetails = data.detail ? JSON.stringify(data.detail) : data.message
-      console.error('❌ [CREATE_AGENT] Детали ошибки:', errorDetails)
-      throw new Error(errorDetails || data.message || 'Ошибка при создании агента')
+      console.error('❌ [CREATE_AGENT] Детали ошибки:', data)
+
+      const errorInfo = await handleApiError(response, data)
+      errorMessage.value = errorInfo.generalError
+      fieldErrors.value = errorInfo.fieldErrors
+      return
     }
 
     console.log('✅ [CREATE_AGENT] Агент успешно создан')
     emit('agent-created', data)
+
+    // Отправляем событие для перезагрузки списка агентов
+    window.dispatchEvent(new Event('agents:reload'))
+
+    router.push('/agents')
   } catch (error) {
-    errorMessage.value = error.message || 'Произошла ошибка при создании агента'
+    errorMessage.value = 'Произошла ошибка при создании агента'
     console.error('💥 [CREATE_AGENT] Ошибка:', error)
   } finally {
     isLoading.value = false
@@ -219,7 +244,7 @@ const handleSubmit = async () => {
 }
 
 const handleBack = () => {
-  emit('back')
+  router.push('/agents')
 }
 </script>
 
@@ -358,6 +383,16 @@ const handleBack = () => {
   opacity: 0.6;
   cursor: not-allowed;
   background: var(--color-border-light);
+}
+
+.form-input-error {
+  border-color: #feb2b2;
+  background: #fff5f5;
+}
+
+.form-input-error:focus {
+  border-color: #fc8181;
+  box-shadow: 0 0 0 3px rgba(252, 129, 129, 0.1);
 }
 
 .avatar-selector {

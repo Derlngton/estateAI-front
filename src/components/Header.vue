@@ -9,7 +9,7 @@
 
         <!-- Navigation -->
         <nav class="nav-fashion">
-          <a href="#" class="nav-link-fashion">Агенты</a>
+          <router-link to="/agents" class="nav-link-fashion">Агенты</router-link>
           <a href="#" class="nav-link-fashion">Каталог</a>
           <a href="#" class="nav-link-fashion">Аналитика</a>
           <a href="#" class="nav-link-fashion">Интеграции</a>
@@ -47,7 +47,7 @@
             <button class="auth-btn-fashion" @click="$emit('logout')">Выйти</button>
           </template>
 
-          <button v-else class="auth-btn-fashion" @click="$emit('show-login')">Войти</button>
+          <router-link v-else to="/login" class="auth-btn-fashion" style="text-decoration: none; display: inline-flex; align-items: center;">Войти</router-link>
         </div>
       </div>
     </div>
@@ -66,7 +66,7 @@ defineProps({
   }
 })
 
-defineEmits(['logout', 'show-login'])
+defineEmits(['logout'])
 </script>
 
 <style scoped>

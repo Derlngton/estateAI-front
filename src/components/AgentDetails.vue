@@ -140,16 +140,22 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { fetchWithAuth } from '../utils/api.js'
 
+const router = useRouter()
+
 const props = defineProps({
-  agentId: {
-    type: [Number, String],
+  id: {
+    type: String,
     required: true
   }
 })
 
-const emit = defineEmits(['back', 'agent-updated', 'agent-deleted'])
+// Используем id из props (передаётся через роутер)
+const agentId = props.id
+
+const emit = defineEmits(['agent-updated', 'agent-deleted'])
 
 const formData = ref({
   name: '',
@@ -190,9 +196,9 @@ const loadAgent = async () => {
   errorMessage.value = ''
 
   try {
-    console.log('📡 [AGENT_DETAILS] Загрузка агента:', props.agentId)
+    console.log('📡 [AGENT_DETAILS] Загрузка агента:', agentId)
 
-    const response = await fetchWithAuth(`http://localhost:8000/agents/get_agent/${props.agentId}`, {
+    const response = await fetchWithAuth(`http://localhost:8000/agents/get_agent/${agentId}`, {
       method: 'GET'
     })
 
@@ -237,7 +243,7 @@ const handleSave = async () => {
   try {
     console.log('📤 [AGENT_DETAILS] Сохранение изменений:', formData.value)
 
-    const response = await fetchWithAuth(`http://localhost:8000/agents/${props.agentId}`, {
+    const response = await fetchWithAuth(`http://localhost:8000/agents/${agentId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -261,6 +267,11 @@ const handleSave = async () => {
     originalData.value = { ...formData.value }
 
     emit('agent-updated', result.data || result)
+
+    // Отправляем событие для перезагрузки списка агентов
+    window.dispatchEvent(new Event('agents:reload'))
+
+    router.push('/agents')
   } catch (error) {
     errorMessage.value = error.message || 'Произошла ошибка при сохранении'
     console.error('💥 [AGENT_DETAILS] Ошибка сохранения:', error)
@@ -275,9 +286,9 @@ const handleDelete = async () => {
   }
 
   try {
-    console.log('📤 [AGENT_DETAILS] Удаление агента:', props.agentId)
+    console.log('📤 [AGENT_DETAILS] Удаление агента:', agentId)
 
-    const response = await fetchWithAuth(`http://localhost:8000/agents/${props.agentId}`, {
+    const response = await fetchWithAuth(`http://localhost:8000/agents/${agentId}`, {
       method: 'DELETE'
     })
 
@@ -291,7 +302,12 @@ const handleDelete = async () => {
     }
 
     console.log('✅ [AGENT_DETAILS] Агент удален')
-    emit('agent-deleted', props.agentId)
+    emit('agent-deleted', agentId)
+
+    // Отправляем событие для перезагрузки списка агентов
+    window.dispatchEvent(new Event('agents:reload'))
+
+    router.push('/agents')
   } catch (error) {
     errorMessage.value = error.message || 'Произошла ошибка при удалении'
     console.error('💥 [AGENT_DETAILS] Ошибка удаления:', error)
@@ -304,7 +320,7 @@ const handleBack = () => {
       return
     }
   }
-  emit('back')
+  router.push('/agents')
 }
 
 onMounted(() => {

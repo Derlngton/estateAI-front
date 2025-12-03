@@ -80,22 +80,26 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+
+const router = useRouter()
+const route = useRoute()
 
 const props = defineProps({
-  agentId: {
-    type: [Number, String],
-    required: true
-  },
-  agentName: {
+  id: {
     type: String,
-    default: 'Агент'
+    required: false
   }
 })
 
-const emit = defineEmits(['back', 'select-conversation'])
+// Получаем ID из props или из route params
+const agentId = computed(() => props.id || route.params.id)
+
+const emit = defineEmits(['select-conversation'])
 
 const isLoading = ref(false)
+const agentName = ref('Агент')
 const conversations = ref([
   {
     id: 1,
@@ -172,7 +176,7 @@ const formatDate = (dateString) => {
 }
 
 const handleBack = () => {
-  emit('back')
+  router.push('/agents')
 }
 
 const selectConversation = (conversationId) => {
@@ -182,7 +186,7 @@ const selectConversation = (conversationId) => {
 
 onMounted(() => {
   // В будущем здесь будет загрузка реальных данных с сервера
-  console.log('Loading conversations for agent:', props.agentId)
+  console.log('Loading conversations for agent:', agentId.value)
 })
 </script>
 

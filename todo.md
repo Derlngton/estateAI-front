@@ -1,29 +1,55 @@
 
-Фаза 1
-Нужно создать экран, вызываемый кнопкой "создать агента" в стиле, соответствующем всем проекту. На этом экране пользователь будет заполнять поля, необходимые для создания агента. В каждом поле должен быть соответствующий плейсхолдер для примера заполнения
-Поля для заполнения пользователем:
-    name: str
-    phone: str
-    type: (выпадающее меню, пока там доступно лишь 'Работа с базой клиентов')
-    description:str 
-    messenger: (Выпадающее меню с "Telegram", "WhatsApp", "Viber". Выбрать можно что-то одно)
-    avatar:str (Рядом с пустым аватаром должна быть кнопка для генерации аватара. Пока что это просто заглушка. При нажатии на нее выбирается одна из уже соззадынх ссылок для примеров-агентов)
+Нужно заняться корректной обработкой ошибок на фронтенде. Если нужно, ориентируйся на документацию @OpenApi.json. Так же дополнительно ниже опишу список отбрасываемых исключений на бекенде:
+class UserNotFoundHTTPException(EstateAiHTTPException):
+    status_code = 404
+    detail = "Пользователь не найден"
 
-Не забудь сделать валидацию полей.
-
-В этой форме дложна быть кнопка "Назад" и "Создать агента", при нажатии на которую отправится пост запрос к http://localhost:8000/agents/create
-В теле запроса передай все поля, описанные выше. 
-
-Созданный агент должен сразу отобразиться на главном экране с агентами
+class UserAlreadyExistsHTTPException(EstateAiHTTPException):
+    status_code = 409
+    detail = "Такой пользователь уже зарегистрирован"
 
 
+class WrongTokenHTTPException(EstateAiHTTPException):
+    status_code=401
+    detail="Неверный токен"
+
+class TokenNotFoundHTTPException(EstateAiHTTPException):
+    status_code=401
+    detail="Не получен токен"
+
+class AccessTokenNotFoundHTTPException(TokenNotFoundHTTPException):
+    detail="Не получен access токен"
+
+class RefreshTokenNotFoundHTTPException(TokenNotFoundHTTPException):
+    detail="Не получен refresh токен"
+
+class WrongPasswordHTTPException(EstateAiHTTPException):
+    status_code = 401
+    detail = "Неверный пароль"
+
+class TokenAlreadyExistsHTTPException(EstateAiHTTPException):
+    status_code = 409
+    detail = "Вы уже авторизованы"
+
+class AgentAlreadyExistsHTTPException(EstateAiHTTPException):
+    status_code = 409
+    detail = "Агент с таким номером уже существует"
+
+class FieldOfAgentNotNullHTTPException(EstateAiHTTPException):
+    status_code = 422
+    detail = "Не заполнены все обязательные поля для агента"
+
+class AgentNotFoundHTTPException(EstateAiHTTPException):
+    status_code = 404
+    detail = "Агент не найден"
 
 
-Фаза 2
-На главном экране у пользователя должны отображаться только его созданные агенты. Для этого нужно отправлять гет запрос http://localhost:8000/agents/get_all_agents
+Исходя из этого, реализуй корректную обработку ошибок на фронтенде. Если ошибка связана с каким-то одним полем, отобрази это в интерфейсе страницы. В других случаях, если нужно добавь всплывающую форму с информацией по ошибке
+
+Информация по ошибке должна содержать максимально лаконичную и понятную пользователю информацию, но без технических деталей. Для поддержания высокого уровня безопасности
 
 
-
+Перед принятием решения о форма обработки ошибки (всплывающее окно, отображение под полем и т.п) ВСЕГДА спрашивай у меня
 
 
 
