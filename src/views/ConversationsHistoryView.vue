@@ -3,13 +3,7 @@
     <div class="conversations-container">
       <div class="auth-card">
         <div class="auth-header">
-          <button
-            type="button"
-            @click="handleBack"
-            class="back-btn"
-          >
-            ← Назад
-          </button>
+          <BackButton to="/agents" />
           <h1 class="auth-title">История диалогов</h1>
           <p class="auth-subtitle">{{ agentName }} • {{ conversations.length }} диалогов</p>
         </div>
@@ -82,6 +76,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import BackButton from '../components/BackButton.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -175,9 +170,6 @@ const formatDate = (dateString) => {
   }
 }
 
-const handleBack = () => {
-  router.push('/agents')
-}
 
 const selectConversation = (conversationId) => {
   emit('select-conversation', conversationId)
@@ -221,28 +213,7 @@ onMounted(() => {
   position: relative;
 }
 
-.back-btn {
-  position: absolute;
-  left: -24px;
-  top: -24px;
-  background: transparent;
-  border: none;
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 8px 0;
-  font-family: 'Inter', sans-serif;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
 
-.back-btn:hover {
-  color: var(--color-text-primary);
-  transform: translateX(-4px);
-}
 
 .auth-title {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;

@@ -1,31 +1,17 @@
 <template>
   <div class="auth-page">
-    <div class="auth-container agent-details-container">
+    <div class="auth-container">
       <div class="auth-card">
         <div class="auth-header">
-          <button
-            type="button"
-            @click="handleBack"
-            class="back-btn"
-          >
-            ← Назад
-          </button>
-          <h1 class="auth-title">Детали агента</h1>
-          <p class="auth-subtitle">Просмотр и редактирование агента</p>
+          <BackButton to="/agents" />
+          <h1 class="auth-title">Создать агента</h1>
+          <p class="auth-subtitle">Заполните информацию о новом AI-агенте</p>
         </div>
 
-        <div v-if="isLoading" class="loading-state">
-          <p>Загрузка...</p>
-        </div>
-
-        <div v-else-if="errorMessage" class="error-message">
-          {{ errorMessage }}
-        </div>
-
-        
-        
-
-        <form v-else @submit.prevent class="auth-form">
+        <form @submit.prevent="handleSubmit" class="auth-form">
+          <div v-if="errorMessage" class="error-message">
+            {{ errorMessage }}
+          </div>
 
           <div class="form-group">
             <label class="form-label">Аватар</label>
@@ -44,6 +30,7 @@
                 type="button"
                 @click="generateAvatar"
                 class="avatar-generate-btn"
+                :disabled="isLoading"
               >
                 <img src="../assets/icons/auto-generate.svg" alt="" width="16" height="16" />
                 Сгенерировать аватар
@@ -58,9 +45,12 @@
               v-model="formData.name"
               type="text"
               class="form-input"
+              :class="{ 'form-input-error': fieldErrors.name }"
               placeholder="Анна Соколова"
+              :disabled="isLoading"
               required
             />
+            <FieldError :error="fieldErrors.name" />
           </div>
 
           <div class="form-group">
@@ -70,9 +60,12 @@
               v-model="formData.phone"
               type="tel"
               class="form-input"
+              :class="{ 'form-input-error': fieldErrors.phone }"
               placeholder="+7 (926) 555-1234"
+              :disabled="isLoading"
               required
             />
+            <FieldError :error="fieldErrors.phone" />
           </div>
 
           <div class="form-group">
@@ -81,11 +74,14 @@
               id="type"
               v-model="formData.type"
               class="form-input"
+              :class="{ 'form-input-error': fieldErrors.type }"
+              :disabled="isLoading"
               required
             >
               <option value="">Выберите тип</option>
               <option value="Работа с базой клиентов">Работа с базой клиентов</option>
             </select>
+            <FieldError :error="fieldErrors.type" />
           </div>
 
           <div class="form-group">
@@ -94,6 +90,8 @@
               id="messenger"
               v-model="formData.messenger"
               class="form-input"
+              :class="{ 'form-input-error': fieldErrors.messenger }"
+              :disabled="isLoading"
               required
             >
               <option value="">Выберите мессенджер</option>
@@ -101,6 +99,7 @@
               <option value="WhatsApp">WhatsApp</option>
               <option value="Viber">Viber</option>
             </select>
+            <FieldError :error="fieldErrors.messenger" />
           </div>
 
           <div class="form-group">
@@ -109,27 +108,19 @@
               id="description"
               v-model="formData.description"
               class="form-input form-textarea"
-              placeholder="Специализируюсь на квартирах в новостройках..."
+              :class="{ 'form-input-error': fieldErrors.description }"
+              placeholder="Специализируюсь на квартирах в новостройках. Помогу подобрать оптимальный вариант..."
+              :disabled="isLoading"
               required
               rows="4"
             ></textarea>
+            <FieldError :error="fieldErrors.description" />
           </div>
 
-          <div class="form-actions-row">
-            <button
-              type="button"
-              @click="handleSave"
-              class="auth-btn"
-              :disabled="!hasChanges || isSaving"
-            >
-              {{ isSaving ? 'Сохранение...' : 'Сохранить изменения' }}
-            </button>
-            <button
-              type="button"
-              @click="handleDelete"
-              class="auth-btn delete-btn"
-            >
-              Удалить агента
+
+          <div class="form-actions">
+            <button type="submit" class="auth-btn" :disabled="isLoading || !isFormValid">
+              {{ isLoading ? 'Создание...' : 'Создать агента' }}
             </button>
           </div>
         </form>
@@ -139,23 +130,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchWithAuth } from '../utils/api.js'
+import FieldError from '../components/FieldError.vue'
+import BackButton from '../components/BackButton.vue'
+import { handleApiError } from '../utils/errorHandler.js'
 
 const router = useRouter()
-
-const props = defineProps({
-  id: {
-    type: String,
-    required: true
-  }
-})
-
-// Используем id из props (передаётся через роутер)
-const agentId = props.id
-
-const emit = defineEmits(['agent-updated', 'agent-deleted'])
 
 const formData = ref({
   name: '',
@@ -166,10 +148,11 @@ const formData = ref({
   avatar: ''
 })
 
-const originalData = ref({})
-const isLoading = ref(true)
-const isSaving = ref(false)
+const isLoading = ref(false)
 const errorMessage = ref('')
+const fieldErrors = ref({})
+
+const emit = defineEmits(['agent-created'])
 
 const avatarOptions = [
   'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop',
@@ -182,8 +165,13 @@ const avatarOptions = [
   'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop'
 ]
 
-const hasChanges = computed(() => {
-  return JSON.stringify(formData.value) !== JSON.stringify(originalData.value)
+const isFormValid = computed(() => {
+  return formData.value.name.trim() &&
+    formData.value.phone.trim() &&
+    formData.value.type &&
+    formData.value.description.trim() &&
+    formData.value.messenger &&
+    formData.value.avatar
 })
 
 const generateAvatar = () => {
@@ -191,141 +179,65 @@ const generateAvatar = () => {
   formData.value.avatar = avatarOptions[randomIndex]
 }
 
-const loadAgent = async () => {
-  isLoading.value = true
-  errorMessage.value = ''
-
-  try {
-    console.log('📡 [AGENT_DETAILS] Загрузка агента:', agentId)
-
-    const response = await fetchWithAuth(`http://localhost:8000/agents/get_agent/${agentId}`, {
-      method: 'GET'
-    })
-
-    console.log('📥 [AGENT_DETAILS] Получен ответ:', {
-      status: response.status,
-      statusText: response.statusText
-    })
-
-    if (!response.ok) {
-      throw new Error('Ошибка при загрузке агента')
-    }
-
-    const result = await response.json()
-    console.log('📥 [AGENT_DETAILS] Данные агента:', result)
-
-    const agentData = result.data || result
-
-    formData.value = {
-      name: agentData.name || '',
-      phone: agentData.phone || '',
-      type: agentData.type || '',
-      description: agentData.description || '',
-      messenger: agentData.messenger || '',
-      avatar: agentData.avatar || ''
-    }
-
-    originalData.value = { ...formData.value }
-
-    console.log('✅ [AGENT_DETAILS] Агент загружен')
-  } catch (error) {
-    errorMessage.value = error.message || 'Произошла ошибка при загрузке агента'
-    console.error('💥 [AGENT_DETAILS] Ошибка загрузки:', error)
-  } finally {
-    isLoading.value = false
-  }
+const validatePhone = (phone) => {
+  const phoneRegex = /^\+?[0-9\s\(\)\-]{10,}$/
+  return phoneRegex.test(phone)
 }
 
-const handleSave = async () => {
-  isSaving.value = true
+const handleSubmit = async () => {
   errorMessage.value = ''
+  fieldErrors.value = {}
+
+  if (!validatePhone(formData.value.phone)) {
+    fieldErrors.value.phone = 'Введите корректный номер телефона'
+    return
+  }
+
+  isLoading.value = true
 
   try {
-    console.log('📤 [AGENT_DETAILS] Сохранение изменений:', formData.value)
+    console.log('📤 [CREATE_AGENT] Отправка данных агента:', formData.value)
 
-    const response = await fetchWithAuth(`http://localhost:8000/agents/${agentId}`, {
-      method: 'PUT',
+    const response = await fetchWithAuth('http://localhost:8000/agents/create', {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(formData.value)
     })
 
-    console.log('📥 [AGENT_DETAILS] Ответ на сохранение:', {
+    console.log('📥 [CREATE_AGENT] Получен ответ:', {
       status: response.status,
       statusText: response.statusText
     })
 
-    if (!response.ok) {
-      const data = await response.json()
-      throw new Error(data.message || 'Ошибка при сохранении')
-    }
-
-    const result = await response.json()
-    console.log('✅ [AGENT_DETAILS] Изменения сохранены')
-
-    originalData.value = { ...formData.value }
-
-    emit('agent-updated', result.data || result)
-
-    // Отправляем событие для перезагрузки списка агентов
-    window.dispatchEvent(new Event('agents:reload'))
-
-    router.push('/agents')
-  } catch (error) {
-    errorMessage.value = error.message || 'Произошла ошибка при сохранении'
-    console.error('💥 [AGENT_DETAILS] Ошибка сохранения:', error)
-  } finally {
-    isSaving.value = false
-  }
-}
-
-const handleDelete = async () => {
-  if (!confirm('Вы уверены, что хотите удалить этого агента?')) {
-    return
-  }
-
-  try {
-    console.log('📤 [AGENT_DETAILS] Удаление агента:', agentId)
-
-    const response = await fetchWithAuth(`http://localhost:8000/agents/${agentId}`, {
-      method: 'DELETE'
-    })
-
-    console.log('📥 [AGENT_DETAILS] Ответ на удаление:', {
-      status: response.status,
-      statusText: response.statusText
-    })
+    const data = await response.json()
+    console.log('📥 [CREATE_AGENT] Данные ответа:', data)
 
     if (!response.ok) {
-      throw new Error('Ошибка при удалении агента')
-    }
+      console.error('❌ [CREATE_AGENT] Детали ошибки:', data)
 
-    console.log('✅ [AGENT_DETAILS] Агент удален')
-    emit('agent-deleted', agentId)
-
-    // Отправляем событие для перезагрузки списка агентов
-    window.dispatchEvent(new Event('agents:reload'))
-
-    router.push('/agents')
-  } catch (error) {
-    errorMessage.value = error.message || 'Произошла ошибка при удалении'
-    console.error('💥 [AGENT_DETAILS] Ошибка удаления:', error)
-  }
-}
-
-const handleBack = () => {
-  if (hasChanges.value) {
-    if (!confirm('У вас есть несохраненные изменения. Вы уверены, что хотите выйти?')) {
+      const errorInfo = await handleApiError(response, data)
+      errorMessage.value = errorInfo.generalError
+      fieldErrors.value = errorInfo.fieldErrors
       return
     }
+
+    console.log('✅ [CREATE_AGENT] Агент успешно создан')
+    emit('agent-created', data)
+
+    // Отправляем событие для перезагрузки списка агентов
+    window.dispatchEvent(new Event('agents:reload'))
+
+    router.push('/agents')
+  } catch (error) {
+    errorMessage.value = 'Произошла ошибка при создании агента'
+    console.error('💥 [CREATE_AGENT] Ошибка:', error)
+  } finally {
+    isLoading.value = false
   }
-  router.push('/agents')
 }
 
-onMounted(() => {
-  loadAgent()
-})
 </script>
 
 <style scoped>
@@ -338,8 +250,9 @@ onMounted(() => {
   padding: var(--spacing-2xl) var(--spacing-lg);
 }
 
-.agent-details-container {
-  max-width: 640px;
+.auth-container {
+  width: 100%;
+  max-width: 540px;
 }
 
 .auth-card {
@@ -356,29 +269,6 @@ onMounted(() => {
   margin-bottom: var(--spacing-2xl);
   padding-top: var(--spacing-md);
   position: relative;
-}
-
-.back-btn {
-  position: absolute;
-  left: -24px;
-  top: -24px;
-  background: transparent;
-  border: none;
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 8px 0;
-  font-family: 'Inter', sans-serif;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.back-btn:hover {
-  color: var(--color-text-primary);
-  transform: translateX(-4px);
 }
 
 .auth-title {
@@ -400,12 +290,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
-}
-
-.loading-state {
-  text-align: center;
-  padding: var(--spacing-2xl);
-  color: var(--color-text-secondary);
 }
 
 .error-message {
@@ -464,6 +348,22 @@ onMounted(() => {
   border-color: var(--color-text-tertiary);
 }
 
+.form-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--color-border-light);
+}
+
+.form-input-error {
+  border-color: #feb2b2;
+  background: #fff5f5;
+}
+
+.form-input-error:focus {
+  border-color: #fc8181;
+  box-shadow: 0 0 0 3px rgba(252, 129, 129, 0.1);
+}
+
 .avatar-selector {
   display: flex;
   gap: var(--spacing-md);
@@ -515,25 +415,30 @@ onMounted(() => {
   letter-spacing: 0.3px;
 }
 
-.avatar-generate-btn:hover {
+.avatar-generate-btn:hover:not(:disabled) {
   border-color: var(--color-primary);
   color: var(--color-primary);
   transform: translateY(-1px);
 }
 
-.form-actions-row {
+.avatar-generate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-actions {
   display: flex;
+  justify-content: flex-end;
   gap: var(--spacing-md);
-  margin-top: var(--spacing-sm);
+  margin-top: var(--spacing-md);
 }
 
 .auth-btn {
-  flex: 1;
   background: var(--color-primary);
   color: white;
   border: 1px solid var(--color-primary);
   border-radius: var(--radius-none);
-  padding: 16px;
+  padding: 16px 40px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -560,46 +465,6 @@ onMounted(() => {
   transform: none;
 }
 
-.secondary-btn {
-  background: transparent;
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
-}
-
-.secondary-btn:hover:not(:disabled) {
-  background: var(--color-bg-alt);
-  color: var(--color-text-primary);
-  border-color: var(--color-primary);
-}
-
-.delete-btn {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-.delete-btn:hover:not(:disabled) {
-  background: #f5c6cb;
-  color: #721c24;
-  border-color: #721c24;
-}
-
-/* .start-btn  {*/
-.start-btn:hover:not(:disabled){
-  background: #e6f7ed;
-  color: #1e7e34;
-  border: 1px solid #c3e6cb;
-}
-
-.start-btn {
-/* .start-btn:hover:not(:disabled) { */
-  /* background: #c3e6cb; */
-  background: #ffffff;
-  color: #1e7e34;
-  border-color: #1e7e34;
-  /* border-color: #c3e6cb; */
-}
-
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -624,7 +489,7 @@ onMounted(() => {
     font-size: 28px;
   }
 
-  .form-actions-row {
+  .form-actions {
     flex-direction: column;
   }
 

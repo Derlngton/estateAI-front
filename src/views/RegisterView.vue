@@ -3,13 +3,28 @@
     <div class="auth-container">
       <div class="auth-card">
         <div class="auth-header">
-          <h1 class="auth-title">Добро пожаловать</h1>
-          <p class="auth-subtitle">Войдите в свой аккаунт</p>
+          <h1 class="auth-title">Создать аккаунт</h1>
+          <p class="auth-subtitle">Присоединяйтесь к ESTATE AI</p>
         </div>
 
-        <form @submit.prevent="handleLogin" class="auth-form">
+        <form @submit.prevent="handleRegister" class="auth-form">
           <div v-if="errorMessage" class="error-message">
             {{ errorMessage }}
+          </div>
+
+          <div class="form-group">
+            <label for="name" class="form-label">Имя</label>
+            <input
+              id="name"
+              v-model="name"
+              type="text"
+              class="form-input"
+              :class="{ 'form-input-error': fieldErrors.name }"
+              placeholder="Иван Иванов"
+              :disabled="isLoading"
+              required
+            />
+            <FieldError :error="fieldErrors.name" />
           </div>
 
           <div class="form-group">
@@ -35,30 +50,47 @@
               type="password"
               class="form-input"
               :class="{ 'form-input-error': fieldErrors.password }"
-              placeholder="Введите пароль"
+              placeholder="Минимум 8 символов"
               :disabled="isLoading"
               required
+              minlength="8"
             />
             <FieldError :error="fieldErrors.password" />
           </div>
 
+          <div class="form-group">
+            <label for="confirmPassword" class="form-label">Подтвердите пароль</label>
+            <input
+              id="confirmPassword"
+              v-model="confirmPassword"
+              type="password"
+              class="form-input"
+              :class="{ 'form-input-error': fieldErrors.confirmPassword }"
+              placeholder="Повторите пароль"
+              :disabled="isLoading"
+              required
+            />
+            <FieldError :error="fieldErrors.confirmPassword" />
+          </div>
+
           <div class="form-footer">
-            <!-- <label class="checkbox-label">
-              <input type="checkbox" v-model="rememberMe" class="checkbox-input" :disabled="isLoading" />
-              <span class="checkbox-text">Запомнить меня</span>
-            </label> -->
-            <a href="#" class="forgot-link">Забыли пароль?</a>
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="acceptTerms" class="checkbox-input" :disabled="isLoading" required />
+              <span class="checkbox-text">
+                Я принимаю <a href="#" class="terms-link">условия использования</a>
+              </span>
+            </label>
           </div>
 
           <button type="submit" class="auth-btn" :disabled="isLoading">
-            {{ isLoading ? 'Вход...' : 'Войти' }}
+            {{ isLoading ? 'Регистрация...' : 'Зарегистрироваться' }}
           </button>
         </form>
 
         <div class="auth-switch">
-          <span class="auth-switch-text">Нет аккаунта?</span>
-          <router-link to="/register" class="auth-switch-link">
-            Зарегистрироваться
+          <span class="auth-switch-text">Уже есть аккаунт?</span>
+          <router-link to="/login" class="auth-switch-link">
+            Войти
           </router-link>
         </div>
       </div>
@@ -68,52 +100,102 @@
 
 <script setup>
 import { ref } from 'vue'
-import FieldError from './FieldError.vue'
+import FieldError from '../components/FieldError.vue'
 import { handleApiError } from '../utils/errorHandler.js'
 
+const name = ref('')
 const email = ref('')
 const password = ref('')
-// const rememberMe = ref(false)
+const confirmPassword = ref('')
+const acceptTerms = ref(false)
 const isLoading = ref(false)
 const errorMessage = ref('')
 const fieldErrors = ref({})
 
-const emit = defineEmits(['login-success'])
+const emit = defineEmits(['register-success'])
 
-const handleLogin = async () => {
+const handleRegister = async () => {
   errorMessage.value = ''
   fieldErrors.value = {}
+
+  console.log('📝 [REGISTER] Начало процесса регистрации', {
+    name: name.value,
+    email: email.value,
+    timestamp: new Date().toISOString()
+  })
+
+  if (password.value !== confirmPassword.value) {
+    console.warn('⚠️ [REGISTER] Пароли не совпадают')
+    fieldErrors.value.confirmPassword = 'Пароли не совпадают'
+    return
+  }
+
+  if (!acceptTerms.value) {
+    console.warn('⚠️ [REGISTER] Условия использования не приняты')
+    errorMessage.value = 'Необходимо принять условия использования'
+    return
+  }
+
   isLoading.value = true
 
   try {
-    const response = await fetch('http://localhost:8000/auth/login', {
+    console.log('📡 [REGISTER] Отправка запроса на сервер...')
+
+    const response = await fetch('http://localhost:8000/auth/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
       body: JSON.stringify({
+        name: name.value,
         email: email.value,
         password: password.value
       })
     })
 
+    console.log('📥 [REGISTER] Получен ответ от сервера', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: {
+        'content-type': response.headers.get('content-type'),
+        'set-cookie': response.headers.get('set-cookie') ? 'присутствует' : 'отсутствует'
+      }
+    })
+
     const data = await response.json()
-    console.log('response: ',data)
+
+    console.log('📦 [REGISTER] Данные ответа:', data)
 
     if (!response.ok) {
+      console.error('❌ [REGISTER] Ошибка регистрации', {
+        status: response.status,
+        message: data.message || 'Неизвестная ошибка'
+      })
+
       const errorInfo = await handleApiError(response, data)
       errorMessage.value = errorInfo.generalError
       fieldErrors.value = errorInfo.fieldErrors
       return
     }
 
-    emit('login-success', { email: email.value })
+    console.log('✅ [REGISTER] Успешная регистрация', {
+      name: name.value,
+      email: email.value,
+      userData: data
+    })
+
+    emit('register-success', { name: name.value, email: email.value })
   } catch (error) {
-    errorMessage.value = 'Произошла ошибка при входе'
-    console.error('Login error:', error)
+    errorMessage.value = 'Произошла ошибка при регистрации'
+    console.error('💥 [REGISTER] Критическая ошибка:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    })
   } finally {
     isLoading.value = false
+    console.log('🏁 [REGISTER] Завершение процесса регистрации')
   }
 }
 </script>
@@ -235,15 +317,12 @@ const handleLogin = async () => {
 }
 
 .form-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-top: var(--spacing-xs);
 }
 
 .checkbox-label {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--spacing-sm);
   cursor: pointer;
 }
@@ -253,23 +332,25 @@ const handleLogin = async () => {
   height: 16px;
   cursor: pointer;
   accent-color: var(--color-primary);
+  margin-top: 2px;
+  flex-shrink: 0;
 }
 
 .checkbox-text {
   font-size: 14px;
   color: var(--color-text-secondary);
   user-select: none;
+  line-height: 1.5;
 }
 
-.forgot-link {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.forgot-link:hover {
+.terms-link {
   color: var(--color-primary);
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.terms-link:hover {
+  opacity: 0.7;
 }
 
 .auth-btn {

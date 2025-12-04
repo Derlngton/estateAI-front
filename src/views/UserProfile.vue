@@ -2,13 +2,7 @@
   <div class="profile-page">
     <div class="container">
       <div class="profile-container">
-        <button
-          type="button"
-          @click="handleBack"
-          class="back-btn"
-        >
-          ← Назад
-        </button>
+        <BackButton to="/agents" />
         <h1 class="profile-title">Профиль пользователя</h1>
 
         <div v-if="loading" class="loading">
@@ -47,10 +41,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { fetchWithAuth } from '../utils/api.js'
-
-const router = useRouter()
+import BackButton from '../components/BackButton.vue'
 
 const loading = ref(true)
 const error = ref(null)
@@ -113,10 +105,6 @@ const handleChangePassword = () => {
   alert('Функция изменения пароля будет реализована позже')
 }
 
-const handleBack = () => {
-  router.push('/agents')
-}
-
 onMounted(() => {
   fetchUserProfile()
 })
@@ -135,26 +123,6 @@ onMounted(() => {
   background: #ffffff;
   padding: 48px;
   border: 1px solid #e0e0e0;
-}
-
-.back-btn {
-  background: transparent;
-  border: none;
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 0;
-  margin-bottom: 24px;
-  font-family: 'Inter', sans-serif;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.back-btn:hover {
-  color: var(--color-text-primary);
 }
 
 .profile-title {

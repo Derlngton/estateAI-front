@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import LoginForm from '../components/LoginForm.vue'
-import RegisterForm from '../components/RegisterForm.vue'
-import CreateAgentForm from '../components/CreateAgentForm.vue'
-import AgentDetails from '../components/AgentDetails.vue'
-import ConversationsHistory from '../components/ConversationsHistory.vue'
-import StartAgentForm from '../components/StartAgentForm.vue'
+import LoginView from '../views/LoginView.vue'
+import RegisterView from '../views/RegisterView.vue'
+import CreateAgentView from '../views/CreateAgentView.vue'
+import AgentDetailsView from '../views/AgentDetailsView.vue'
+import ConversationsHistoryView from '../views/ConversationsHistoryView.vue'
+import StartAgentView from '../views/StartAgentView.vue'
 import AgentsList from '../views/AgentsList.vue'
 import UserProfile from '../views/UserProfile.vue'
 
@@ -16,13 +16,13 @@ const routes = [
   {
     path: '/login',
     name: 'login',
-    component: LoginForm,
+    component: LoginView,
     meta: { requiresGuest: true }
   },
   {
     path: '/register',
     name: 'register',
-    component: RegisterForm,
+    component: RegisterView,
     meta: { requiresGuest: true }
   },
   {
@@ -34,27 +34,27 @@ const routes = [
   {
     path: '/agents/create',
     name: 'create-agent',
-    component: CreateAgentForm,
+    component: CreateAgentView,
     meta: { requiresAuth: true }
   },
   {
     path: '/agents/:id',
     name: 'agent-details',
-    component: AgentDetails,
+    component: AgentDetailsView,
     meta: { requiresAuth: true },
     props: true
   },
   {
     path: '/agents/:id/start',
     name: 'start-agent',
-    component: StartAgentForm,
+    component: StartAgentView,
     meta: { requiresAuth: true },
     props: true
   },
   {
     path: '/agents/:id/conversations',
     name: 'conversations',
-    component: ConversationsHistory,
+    component: ConversationsHistoryView,
     meta: { requiresAuth: true },
     props: true
   },
