@@ -787,12 +787,18 @@
             "type": "string",
             "title": "Email",
             "example": "user@example.com"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "example": "Имя Фамилия"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "email"
+          "email",
+          "name"
         ],
         "title": "UserResponse",
         "description": "Данные пользователя"

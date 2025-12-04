@@ -6,6 +6,7 @@ import AgentDetails from '../components/AgentDetails.vue'
 import ConversationsHistory from '../components/ConversationsHistory.vue'
 import StartAgentForm from '../components/StartAgentForm.vue'
 import AgentsList from '../views/AgentsList.vue'
+import UserProfile from '../views/UserProfile.vue'
 
 const routes = [
   {
@@ -56,6 +57,12 @@ const routes = [
     component: ConversationsHistory,
     meta: { requiresAuth: true },
     props: true
+  },
+  {
+    path: '/profile',
+    name: 'profile',
+    component: UserProfile,
+    meta: { requiresAuth: true }
   }
 ]
 
